@@ -1,107 +1,314 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
-import { Avatar, AvatarImage } from '../ui/avatar'
-import { LogOut, User2 } from 'lucide-react'
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
+import { LogOut, User2, Menu, X, Home, Briefcase, BarChart3 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import axios from 'axios'
+import apiClient from '@/utils/apiClient'
 import { USER_API_END_POINT } from '@/utils/constant'
-import { setUser } from '@/redux/authSlice'
+import { logout } from '@/redux/authSlice'
 import { toast } from 'sonner'
+import { motion } from 'framer-motion'
 
 const Navbar = () => {
-    const { user } = useSelector(store => store.auth);
+    const { user, isAuthenticated } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [isOpen, setIsOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 50);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const logoutHandler = async () => {
         try {
-            const res = await axios.get(`${USER_API_END_POINT}/logout`, { withCredentials: true });
+            const res = await apiClient.get(`${USER_API_END_POINT}/logout`);
             if (res.data.success) {
-                dispatch(setUser(null));
+                dispatch(logout());
                 navigate("/");
                 toast.success(res.data.message);
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message);
         }
     }
+
+    const navVariants = {
+        hidden: { y: -100 },
+        visible: { y: 0, transition: { duration: 0.3 } }
+    };
+
+    const menuVariants = {
+        closed: { opacity: 0, x: -300 },
+        open: { opacity: 1, x: 0, transition: { duration: 0.3 } }
+    };
+
     return (
-        <div className='bg-white'>
-            <div className='flex items-center justify-between mx-auto max-w-7xl h-16'>
-                <div>
-                    <h1 className='text-2xl font-bold'>Job<span className='text-[#F83002]'>Portal</span></h1>
-                </div>
-                <div className='flex items-center gap-12'>
-                    <ul className='flex font-medium items-center gap-5'>
+        <>
+            <motion.div
+                variants={navVariants}
+                initial="hidden"
+                animate="visible"
+                className="fixed w-full top-0 z-50 transition-all duration-300 bg-black text-white shadow-xl"
+            >
+                <div className='flex items-center justify-between mx-auto max-w-7xl h-16 px-4 sm:px-6 lg:px-8'>
+                    {/* Logo */}
+                    <motion.div whileHover={{ scale: 1.05 }} className='flex items-center gap-2 group cursor-pointer'>
+                        <Link to="/" className='flex items-center gap-2'>
+                            <motion.div 
+                                whileHover={{ rotate: 5 }}
+                                className='w-10 h-10 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:shadow-purple-600/50 transition-all'
+                            >
+                                JQ
+                            </motion.div>
+                            <span className='text-xl font-bold gradient-text hidden sm:inline'>
+                                JobQuest
+                            </span>
+                        </Link>
+                    </motion.div>
+
+                    {/* Desktop Menu */}
+                    <div className='hidden md:flex items-center gap-8'>
+                        <ul className='flex font-medium items-center gap-6'>
+                            {
+                                isAuthenticated && user ? (
+                                    <>
+                                        {user.role === 'student' && (
+                                            <motion.li whileHover={{ y: -2 }} className='hover:text-purple-600 transition-colors'>
+                                                <Link to="/">Home</Link>
+                                            </motion.li>
+                                        )}
+                                        {user.role === 'recruiter' ? (
+                                            <>
+                                                <motion.li whileHover={{ y: -2 }} className='hover:text-purple-600 transition-colors'>
+                                                    <Link to="/admin/dashboard">Dashboard</Link>
+                                                </motion.li>
+                                                <motion.li whileHover={{ y: -2 }} className='hover:text-purple-600 transition-colors'>
+                                                    <Link to="/admin/companies">Companies</Link>
+                                                </motion.li>
+                                                <motion.li whileHover={{ y: -2 }} className='hover:text-purple-600 transition-colors'>
+                                                    <Link to="/admin/jobs">Jobs</Link>
+                                                </motion.li>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <motion.li whileHover={{ y: -2 }} className='hover:text-purple-600 transition-colors'>
+                                                    <Link to="/jobs">Jobs</Link>
+                                                </motion.li>
+                                                <motion.li whileHover={{ y: -2 }} className='hover:text-purple-600 transition-colors'>
+                                                    <Link to="/browse">Browse</Link>
+                                                </motion.li>
+                                            </>
+                                        )
+                                        }
+                                    </>
+                                ) : (
+                                    <>
+                                        <li className='hover:text-purple-600 transition-colors'>
+                                            <Link to="/">Home</Link>
+                                        </li>
+                                    </>
+                                )
+                            }
+                        </ul>
+
                         {
-                            user && user.role === 'recruiter' ? (
+                            !isAuthenticated ? (
+                                <div className='flex items-center gap-3'>
+                                    <Link to="/login">
+                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                            <Button className='btn-secondary border-purple-400/50 hover:border-purple-600/80 hover:shadow-lg'>
+                                                Login
+                                            </Button>
+                                        </motion.div>
+                                    </Link>
+                                    <Link to="/signup">
+                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                            <Button className="btn-primary shadow-lg hover:shadow-purple-600/50">
+                                                Sign Up
+                                            </Button>
+                                        </motion.div>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Avatar className="cursor-pointer w-10 h-10 hover:shadow-lg transition-all bg-gradient-to-br from-purple-600 to-pink-600">
+                                            <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
+                                            <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white font-bold">
+                                                {user?.fullname?.substring(0, 2).toUpperCase() || 'U'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80">
+                                        <div className='space-y-4'>
+                                            <div className='flex gap-3'>
+                                                <Avatar className="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600">
+                                                    <AvatarImage src={user?.profile?.profilePhoto} alt={user?.fullname} />
+                                                    <AvatarFallback className="bg-gradient-to-br from-purple-600 to-pink-600 text-white font-bold text-sm">
+                                                        {user?.fullname?.substring(0, 2).toUpperCase() || 'U'}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <h4 className='font-semibold text-gray-900'>{user?.fullname}</h4>
+                                                    <p className='text-sm text-gray-600'>{user?.role === 'student' ? 'Job Seeker' : 'Recruiter'}</p>
+                                                    <p className='text-xs text-gray-500'>{user?.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className='border-t pt-3 space-y-2'>
+                                                {
+                                                    user && user.role === 'student' && (
+                                                        <Link to="/profile">
+                                                            <div className='flex items-center gap-2 p-2 hover:bg-purple-50 rounded-lg cursor-pointer transition-colors'>
+                                                                <User2 size={18} className='text-purple-600' />
+                                                                <span className='text-sm font-medium'>View Profile</span>
+                                                            </div>
+                                                        </Link>
+                                                    )
+                                                }
+                                                {
+                                                    user && user.role === 'recruiter' && (
+                                                        <Link to="/admin/dashboard">
+                                                            <div className='flex items-center gap-2 p-2 hover:bg-purple-50 rounded-lg cursor-pointer transition-colors'>
+                                                                <BarChart3 size={18} className='text-purple-600' />
+                                                                <span className='text-sm font-medium'>Dashboard</span>
+                                                            </div>
+                                                        </Link>
+                                                    )
+                                                }
+
+                                                <div
+                                                    onClick={logoutHandler}
+                                                    className='flex items-center gap-2 p-2 text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors'
+                                                >
+                                                    <LogOut size={18} />
+                                                    <span className='text-sm font-medium'>Logout</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            )
+                        }
+                    </div>
+
+                    {/* Mobile Menu Button */}
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className='md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors text-white'
+                    >
+                        {isOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
+            </motion.div>
+
+            {/* Mobile Menu */}
+            <motion.div
+                variants={menuVariants}
+                initial="closed"
+                animate={isOpen ? 'open' : 'closed'}
+                className="fixed inset-0 top-16 md:hidden bg-black text-white z-40 border-t border-gray-800 overflow-y-auto"
+            >
+                <div className="p-4 space-y-2">
+                    {isAuthenticated && user ? (
+                        <>
+                            {user.role === 'student' && (
+                                <Link
+                                    to="/"
+                                    onClick={() => setIsOpen(false)}
+                                    className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                >
+                                    Home
+                                </Link>
+                            )}
+                            {user.role === 'recruiter' ? (
                                 <>
-                                    <li><Link to="/admin/companies">Companies</Link></li>
-                                    <li><Link to="/admin/jobs">Jobs</Link></li>
+                                    <Link
+                                        to="/admin/dashboard"
+                                        onClick={() => setIsOpen(false)}
+                                        className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                    >
+                                        Dashboard
+                                    </Link>
+                                    <Link
+                                        to="/admin/companies"
+                                        onClick={() => setIsOpen(false)}
+                                        className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                    >
+                                        Companies
+                                    </Link>
+                                    <Link
+                                        to="/admin/jobs"
+                                        onClick={() => setIsOpen(false)}
+                                        className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                    >
+                                        Jobs
+                                    </Link>
                                 </>
                             ) : (
                                 <>
-                                    <li><Link to="/">Home</Link></li>
-                                    <li><Link to="/jobs">Jobs</Link></li>
-                                    <li><Link to="/browse">Browse</Link></li>
+                                    <Link
+                                        to="/jobs"
+                                        onClick={() => setIsOpen(false)}
+                                        className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                    >
+                                        Jobs
+                                    </Link>
+                                    <Link
+                                        to="/browse"
+                                        onClick={() => setIsOpen(false)}
+                                        className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                    >
+                                        Browse
+                                    </Link>
+                                    <Link
+                                        to="/profile"
+                                        onClick={() => setIsOpen(false)}
+                                        className="block px-4 py-3 rounded-lg hover:bg-white/10 transition-colors font-medium text-white"
+                                    >
+                                        Profile
+                                    </Link>
                                 </>
-                            )
-                        }
-
-
-                    </ul>
-                    {
-                        !user ? (
-                            <div className='flex items-center gap-2'>
-                                <Link to="/login"><Button variant="outline">Login</Button></Link>
-                                <Link to="/signup"><Button className="bg-[#6A38C2] hover:bg-[#5b30a6]">Signup</Button></Link>
-                            </div>
-                        ) : (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Avatar className="cursor-pointer">
-                                        <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" />
-                                    </Avatar>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                    <div className=''>
-                                        <div className='flex gap-2 space-y-2'>
-                                            <Avatar className="cursor-pointer">
-                                                <AvatarImage src={user?.profile?.profilePhoto} alt="@shadcn" />
-                                            </Avatar>
-                                            <div>
-                                                <h4 className='font-medium'>{user?.fullname}</h4>
-                                                <p className='text-sm text-muted-foreground'>{user?.profile?.bio}</p>
-                                            </div>
-                                        </div>
-                                        <div className='flex flex-col my-2 text-gray-600'>
-                                            {
-                                                user && user.role === 'student' && (
-                                                    <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                        <User2 />
-                                                        <Button variant="link"> <Link to="/profile">View Profile</Link></Button>
-                                                    </div>
-                                                )
-                                            }
-
-                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                <LogOut />
-                                                <Button onClick={logoutHandler} variant="link">Logout</Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        )
-                    }
-
+                            )}
+                            <button
+                                onClick={() => {
+                                    logoutHandler();
+                                    setIsOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium"
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                to="/login"
+                                onClick={() => setIsOpen(false)}
+                                className="block px-4 py-3 text-purple-400 hover:bg-white/10 rounded-lg transition-colors font-medium"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                to="/signup"
+                                onClick={() => setIsOpen(false)}
+                                className="block px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg transition-colors font-medium"
+                            >
+                                Sign Up
+                            </Link>
+                        </>
+                    )}
                 </div>
-            </div>
-
-        </div>
+            </motion.div>
+        </>
     )
 }
 

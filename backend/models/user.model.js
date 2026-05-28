@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
         unique: true
     },
     phoneNumber: {
-        type: Number,
+        type: String,
         required: true
     },
     password:{
@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
     },
     role:{
         type:String,
-        enum:['student','recruiter'],
+        enum:['student','recruiter','admin'],
         required:true
     },
     profile:{
@@ -32,7 +32,54 @@ const userSchema = new mongoose.Schema({
         profilePhoto:{
             type:String,
             default:""
-        }
+        },
+        headline: {type: String},
+        education: [
+            {
+                school: String,
+                degree: String,
+                fieldOfStudy: String,
+                startDate: Date,
+                endDate: Date,
+                current: Boolean,
+                description: String
+            }
+        ],
+        experience: [
+            {
+                title: String,
+                company: String,
+                location: String,
+                startDate: Date,
+                endDate: Date,
+                current: Boolean,
+                description: String
+            }
+        ]
     },
+    savedJobs: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Job'
+        }
+    ],
+    appliedJobs: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Job'
+        }
+    ],
+    preferences: {
+        jobTypes: [String],
+        workMode: [String], // Remote, Hybrid, Onsite
+        locations: [String],
+        industries: [String],
+        minSalary: Number,
+        maxSalary: Number
+    },
+    banned: {
+        type: Boolean,
+        default: false
+    }
 },{timestamps:true});
 export const User = mongoose.model('User', userSchema);

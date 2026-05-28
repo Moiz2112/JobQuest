@@ -13,25 +13,55 @@ const jobSchema = new mongoose.Schema({
         type: String
     }],
     salary: {
-        type: Number,
-        required: true
+        min: {
+            type: Number,
+            required: true
+        },
+        max: {
+            type: Number,
+            required: true
+        },
+        currency: {
+            type: String,
+            default: 'PKR'
+        }
     },
     experienceLevel:{
-        type:Number,
+        type:String,
+        enum: ['Entry-level', 'Mid-level', 'Senior', 'Executive'],
         required:true,
     },
     location: {
         type: String,
+        enum: ['Islamabad', 'Lahore', 'Karachi', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta'],
         required: true
     },
     jobType: {
+        type: String,
+        enum: ['Full-time', 'Part-time', 'Contract', 'Internship'],
+        required: true
+    },
+    workMode: {
+        type: String,
+        enum: ['Remote', 'Hybrid', 'Onsite'],
+        required: true
+    },
+    category: {
+        type: String,
+        required: true
+    },
+    industry: {
         type: String,
         required: true
     },
     position: {
         type: Number,
-        required: true
+        required: true,
+        default: 1
     },
+    skills: [{
+        type: String
+    }],
     company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
@@ -47,6 +77,14 @@ const jobSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Application',
         }
-    ]
+    ],
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    applicationCount: {
+        type: Number,
+        default: 0
+    }
 },{timestamps:true});
 export const Job = mongoose.model("Job", jobSchema);

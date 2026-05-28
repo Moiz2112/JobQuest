@@ -4,30 +4,95 @@ import FilterCard from './FilterCard'
 import Job from './Job';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
+import useGetAllJobs from '@/hooks/useGetAllJobs';
+import Footer from './shared/Footer';
 
 // const jobsArray = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const Jobs = () => {
+    useGetAllJobs();
     const { allJobs, searchedQuery } = useSelector(store => store.job);
     const [filterJobs, setFilterJobs] = useState(allJobs);
 
     useEffect(() => {
-        if (searchedQuery) {
-            const filteredJobs = allJobs.filter((job) => {
-                return job.title.toLowerCase().includes(searchedQuery.toLowerCase()) ||
-                    job.description.toLowerCase().includes(searchedQuery.toLowerCase()) ||
-                    job.location.toLowerCase().includes(searchedQuery.toLowerCase())
-            })
-            setFilterJobs(filteredJobs)
-        } else {
-            setFilterJobs(allJobs)
+        console.log("========== FILTER DEBUG ==========");
+        console.log("All Jobs Count:", allJobs?.length);
+        console.log("All Jobs:", allJobs);
+        console.log("Searched Query:", JSON.stringify(searchedQuery));
+        
+        if (!searchedQuery || searchedQuery.trim() === '') {
+            console.log("No search query - showing all jobs");
+            setFilterJobs(allJobs || []);
+            return;
         }
+        
+        const query = searchedQuery.toLowerCase().trim();
+        console.log("Filtering with query:", query);
+        
+        const filteredJobs = (allJobs || []).filter((job) => {
+            // Handle null/undefined jobs
+            if (!job) return false;
+            
+            // Debug: log each job's location
+            console.log(`Job: "${job?.title}" | Location: "${job?.location}" | Type: ${typeof job?.location}`);
+            
+            // Check if query matches location
+            if (job?.location) {
+                const jobLocation = String(job.location).toLowerCase().trim();
+                if (jobLocation === query || jobLocation.includes(query)) {
+                    console.log(`✓ MATCH FOUND: Location "${jobLocation}" matches query "${query}"`);
+                    return true;
+                }
+            }
+            
+            // Check if query matches job title
+            if (job?.title && String(job.title).toLowerCase().includes(query)) {
+                console.log(`✓ MATCH FOUND: Title matches`);
+                return true;
+            }
+            
+            // Check if query matches description
+            if (job?.description && String(job.description).toLowerCase().includes(query)) {
+                console.log(`✓ MATCH FOUND: Description matches`);
+                return true;
+            }
+            
+            // Check if query is a salary range filter
+            const salaryRanges = {
+                "0-40k": { min: 0, max: 40000 },
+                "40k-1 lakh": { min: 40000, max: 100000 },
+                "1 lakh-5 lakh": { min: 100000, max: 500000 },
+                "5 lakh+": { min: 500000, max: Infinity }
+            };
+            
+            if (salaryRanges[query]) {
+                const salary = job?.salary;
+                if (salary && typeof salary === 'object') {
+                    const jobMinSalary = salary.min || 0;
+                    const jobMaxSalary = salary.max || 0;
+                    const range = salaryRanges[query];
+                    
+                    if (jobMaxSalary >= range.min && jobMinSalary <= range.max) {
+                        console.log(`✓ MATCH FOUND: Salary range matches`);
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        });
+        
+        console.log(`FINAL RESULT: ${filteredJobs.length} jobs matched`);
+        console.log("Filtered Jobs:", filteredJobs);
+        console.log("===================================");
+        
+        setFilterJobs(filteredJobs);
     }, [allJobs, searchedQuery]);
 
     return (
         <div>
             <Navbar />
-            <div className='max-w-7xl mx-auto mt-5'>
+            <div className='max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8'>
                 <div className='flex gap-5'>
                     <div className='w-20%'>
                         <FilterCard />
@@ -54,8 +119,7 @@ const Jobs = () => {
                     }
                 </div>
             </div>
-
-
+            <Footer />
         </div>
     )
 }

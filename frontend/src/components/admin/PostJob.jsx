@@ -5,11 +5,12 @@ import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { useSelector } from 'react-redux'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import axios from 'axios'
+import apiClient from '@/utils/apiClient'
 import { JOB_API_END_POINT } from '@/utils/constant'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import Footer from '../shared/Footer'
 
 const companyArray = [];
 
@@ -18,11 +19,14 @@ const PostJob = () => {
         title: "",
         description: "",
         requirements: "",
-        salary: "",
+        salary: { min: "", max: "" },
         location: "",
         jobType: "",
-        experience: "",
-        position: 0,
+        experienceLevel: "",
+        workMode: "",
+        category: "",
+        industry: "",
+        position: 1,
         companyId: ""
     });
     const [loading, setLoading]= useState(false);
@@ -33,6 +37,17 @@ const PostJob = () => {
         setInput({ ...input, [e.target.name]: e.target.value });
     };
 
+    const handleSalaryChange = (e) => {
+        const { name, value } = e.target;
+        setInput({
+            ...input,
+            salary: {
+                ...input.salary,
+                [name]: value ? Number(value) : ""
+            }
+        });
+    };
+
     const selectChangeHandler = (value) => {
         const selectedCompany = companies.find((company)=> company.name.toLowerCase() === value);
         setInput({...input, companyId:selectedCompany._id});
@@ -40,20 +55,35 @@ const PostJob = () => {
 
     const submitHandler = async (e) => {
         e.preventDefault();
+        
+        // Validation check
+        if (!input.title.trim() || !input.description.trim() || !input.requirements.trim() || 
+            !input.salary.min || !input.salary.max || !input.location.trim() || !input.jobType.trim() || 
+            !input.experienceLevel.trim() || !input.workMode.trim() || !input.category.trim() || 
+            !input.industry.trim() || !input.position || !input.companyId) {
+            toast.error("Please fill in all required fields");
+            return;
+        }
+
+        if (input.salary.min > input.salary.max) {
+            toast.error("Minimum salary cannot be greater than maximum salary");
+            return;
+        }
+
         try {
             setLoading(true);
-            const res = await axios.post(`${JOB_API_END_POINT}/post`, input,{
+            const res = await apiClient.post(`${JOB_API_END_POINT}/post`, input,{
                 headers:{
                     'Content-Type':'application/json'
-                },
-                withCredentials:true
+                }
             });
             if(res.data.success){
                 toast.success(res.data.message);
                 navigate("/admin/jobs");
             }
         } catch (error) {
-            toast.error(error.response.data.message);
+            console.log(error);
+            toast.error(error.response?.data?.message || "Failed to post job");
         } finally{
             setLoading(false);
         }
@@ -62,84 +92,159 @@ const PostJob = () => {
     return (
         <div>
             <Navbar />
-            <div className='flex items-center justify-center w-screen my-5'>
+            <div className='flex items-center justify-center w-screen pt-24 my-5'>
                 <form onSubmit = {submitHandler} className='p-8 max-w-4xl border border-gray-200 shadow-lg rounded-md'>
                     <div className='grid grid-cols-2 gap-2'>
                         <div>
-                            <Label>Title</Label>
+                            <Label>Title <span className='text-red-500'>*</span></Label>
                             <Input
                                 type="text"
                                 name="title"
                                 value={input.title}
                                 onChange={changeEventHandler}
                                 className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="e.g., Senior Developer"
                             />
                         </div>
                         <div>
-                            <Label>Description</Label>
+                            <Label>Description <span className='text-red-500'>*</span></Label>
                             <Input
                                 type="text"
                                 name="description"
                                 value={input.description}
                                 onChange={changeEventHandler}
                                 className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="Job description"
                             />
                         </div>
                         <div>
-                            <Label>Requirements</Label>
+                            <Label>Requirements <span className='text-red-500'>*</span></Label>
                             <Input
                                 type="text"
                                 name="requirements"
                                 value={input.requirements}
                                 onChange={changeEventHandler}
                                 className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="Required skills"
                             />
                         </div>
                         <div>
-                            <Label>Salary</Label>
+                            <Label>Salary Min <span className='text-red-500'>*</span></Label>
+                            <Input
+                                type="number"
+                                name="min"
+                                value={input.salary.min}
+                                onChange={handleSalaryChange}
+                                className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="e.g., 1000"
+                            />
+                        </div>
+                        <div>
+                            <Label>Salary Max <span className='text-red-500'>*</span></Label>
+                            <Input
+                                type="number"
+                                name="max"
+                                value={input.salary.max}
+                                onChange={handleSalaryChange}
+                                className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="e.g., 5000"
+                            />
+                        </div>
+                        <div>
+                            <Label>Location <span className='text-red-500'>*</span></Label>
+                            <Select value={input.location} onValueChange={(value) => setInput({...input, location: value})}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select Location" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="Islamabad">Islamabad</SelectItem>
+                                        <SelectItem value="Lahore">Lahore</SelectItem>
+                                        <SelectItem value="Karachi">Karachi</SelectItem>
+                                        <SelectItem value="Rawalpindi">Rawalpindi</SelectItem>
+                                        <SelectItem value="Faisalabad">Faisalabad</SelectItem>
+                                        <SelectItem value="Multan">Multan</SelectItem>
+                                        <SelectItem value="Peshawar">Peshawar</SelectItem>
+                                        <SelectItem value="Quetta">Quetta</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>Job Type <span className='text-red-500'>*</span></Label>
+                            <Select value={input.jobType} onValueChange={(value) => setInput({...input, jobType: value})}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select Job Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="Full-time">Full-time</SelectItem>
+                                        <SelectItem value="Part-time">Part-time</SelectItem>
+                                        <SelectItem value="Contract">Contract</SelectItem>
+                                        <SelectItem value="Internship">Internship</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>Experience Level <span className='text-red-500'>*</span></Label>
+                            <Select value={input.experienceLevel} onValueChange={(value) => setInput({...input, experienceLevel: value})}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select Experience" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="Entry-level">Entry-level</SelectItem>
+                                        <SelectItem value="Mid-level">Mid-level</SelectItem>
+                                        <SelectItem value="Senior">Senior</SelectItem>
+                                        <SelectItem value="Executive">Executive</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>Work Mode <span className='text-red-500'>*</span></Label>
+                            <Select value={input.workMode} onValueChange={(value) => setInput({...input, workMode: value})}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select Work Mode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem value="Remote">Remote</SelectItem>
+                                        <SelectItem value="Hybrid">Hybrid</SelectItem>
+                                        <SelectItem value="Onsite">Onsite</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label>Category <span className='text-red-500'>*</span></Label>
                             <Input
                                 type="text"
-                                name="salary"
-                                value={input.salary}
+                                name="category"
+                                value={input.category}
                                 onChange={changeEventHandler}
                                 className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="e.g., Technology, Sales"
                             />
                         </div>
                         <div>
-                            <Label>Location</Label>
+                            <Label>Industry <span className='text-red-500'>*</span></Label>
                             <Input
                                 type="text"
-                                name="location"
-                                value={input.location}
+                                name="industry"
+                                value={input.industry}
                                 onChange={changeEventHandler}
                                 className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
+                                placeholder="e.g., IT, Finance"
                             />
                         </div>
                         <div>
-                            <Label>Job Type</Label>
-                            <Input
-                                type="text"
-                                name="jobType"
-                                value={input.jobType}
-                                onChange={changeEventHandler}
-                                className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
-                            />
-                        </div>
-                        <div>
-                            <Label>Experience Level</Label>
-                            <Input
-                                type="text"
-                                name="experience"
-                                value={input.experience}
-                                onChange={changeEventHandler}
-                                className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
-                            />
-                        </div>
-                        <div>
-                            <Label>No of Postion</Label>
+                            <Label>No of Postion <span className='text-red-500'>*</span></Label>
                             <Input
                                 type="number"
                                 name="position"
+                                min="1"
                                 value={input.position}
                                 onChange={changeEventHandler}
                                 className="focus-visible:ring-offset-0 focus-visible:ring-0 my-1"
@@ -147,23 +252,26 @@ const PostJob = () => {
                         </div>
                         {
                             companies.length > 0 && (
-                                <Select onValueChange={selectChangeHandler}>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Select a Company" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            {
-                                                companies.map((company) => {
-                                                    return (
-                                                        <SelectItem value={company?.name?.toLowerCase()}>{company.name}</SelectItem>
-                                                    )
-                                                })
-                                            }
+                                <div>
+                                    <Label>Company <span className='text-red-500'>*</span></Label>
+                                    <Select onValueChange={selectChangeHandler}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select a Company" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {
+                                                    companies.map((company) => {
+                                                        return (
+                                                            <SelectItem key={company._id} value={company?.name?.toLowerCase()}>{company.name}</SelectItem>
+                                                        )
+                                                    })
+                                                }
 
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             )
                         }
                     </div> 
@@ -175,6 +283,7 @@ const PostJob = () => {
                     }
                 </form>
             </div>
+            <Footer />
         </div>
     )
 }
