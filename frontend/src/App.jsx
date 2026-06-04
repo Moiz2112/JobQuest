@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Navbar from './components/shared/Navbar'
 import Login from './components/auth/Login'
 import Signup from './components/auth/Signup'
 import Home from './components/Home'
@@ -126,6 +125,10 @@ const appRouter = createBrowserRouter([
     element: <ProtectedAdminRoute><AdminPlatformDashboard /></ProtectedAdminRoute>
   },
   {
+    path: '/admin/profile',
+    element: <ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>
+  },
+  {
     path: '/admin/users',
     element: <ProtectedAdminRoute><UsersManagement /></ProtectedAdminRoute>
   },
@@ -148,10 +151,6 @@ const appRouter = createBrowserRouter([
   {
     path: '/admin/reports',
     element: <ProtectedAdminRoute><ReportsManagement /></ProtectedAdminRoute>
-  },
-  {
-    path: '/admin/settings',
-    element: <ProtectedAdminRoute><AdminSettingsPage /></ProtectedAdminRoute>
   },
 
 ])

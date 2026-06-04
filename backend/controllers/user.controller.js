@@ -96,6 +96,12 @@ export const login = async (req, res) => {
                 success: false,
             })
         }
+        if (user.banned) {
+            return res.status(403).json({
+                message: "Your account has been banned. Please contact support.",
+                success: false,
+            })
+        }
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
             return res.status(400).json({
@@ -173,6 +179,12 @@ export const adminLogin = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 message: "Invalid email or password",
+                success: false
+            });
+        }
+        if (user.banned) {
+            return res.status(403).json({
+                message: "This admin account has been banned.",
                 success: false
             });
         }

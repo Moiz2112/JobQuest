@@ -19,7 +19,7 @@ const AdminDashboardSidebar = () => {
         { id: 'applications', label: 'Applications', icon: FileText, path: '/admin/applications-management' },
         { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/admin/analytics-management' },
         { id: 'reports', label: 'Reports', icon: AlertCircle, path: '/admin/reports' },
-        { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
+        { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/profile' },
     ];
 
     const isActive = (path) => location.pathname === path;

@@ -1,66 +1,19 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import AdminNavbar from './AdminNavbar'
 import AdminDashboardSidebar from './AdminDashboardSidebar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { motion } from 'framer-motion'
 import { AlertCircle, FileText, Download, Eye } from 'lucide-react'
 import { toast } from 'sonner'
+import apiClient from '@/utils/apiClient'
 
 const ReportsManagement = () => {
-    const [reports] = useState([
-        {
-            id: 1,
-            type: 'User Report',
-            title: 'Suspicious Account Activity',
-            severity: 'high',
-            status: 'pending',
-            date: '2024-06-20',
-            description: 'Multiple accounts with similar patterns detected',
-            reportedBy: 'admin@jobquest.com'
-        },
-        {
-            id: 2,
-            type: 'Job Report',
-            title: 'Inappropriate Job Posting',
-            severity: 'medium',
-            status: 'in-review',
-            date: '2024-06-19',
-            description: 'Job posting contains potentially offensive content',
-            reportedBy: 'user123@gmail.com'
-        },
-        {
-            id: 3,
-            type: 'Company Report',
-            title: 'Unverified Company Profile',
-            severity: 'low',
-            status: 'resolved',
-            date: '2024-06-18',
-            description: 'Company details could not be verified',
-            reportedBy: 'recruiter@company.com'
-        },
-        {
-            id: 4,
-            type: 'User Report',
-            title: 'Spam Applications',
-            severity: 'high',
-            status: 'pending',
-            date: '2024-06-17',
-            description: 'User applying to irrelevant jobs with generic messages',
-            reportedBy: 'recruiter2@company.com'
-        },
-        {
-            id: 5,
-            type: 'Content Report',
-            title: 'Abusive Communication',
-            severity: 'critical',
-            status: 'pending',
-            date: '2024-06-16',
-            description: 'Abusive messages sent between users on platform',
-            reportedBy: 'admin@jobquest.com'
-        }
-    ]);
+    const [reports, setReports] = useState([]);
+    const [selectedReport, setSelectedReport] = useState(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const getSeverityColor = (severity) => {
         switch (severity) {
@@ -90,13 +43,49 @@ const ReportsManagement = () => {
         }
     };
 
+    const getReportedByText = (report) => {
+        if (typeof report?.reportedBy === 'string') return report.reportedBy;
+        if (report?.reportedBy?.email) return report.reportedBy.email;
+        if (report?.reportedBy?.id) return report.reportedBy.id;
+        return 'Anonymous';
+    };
+
+    const getReportDate = (report) => report?.date || report?.createdAt;
+
     const handleResolve = (id) => {
-        toast.success(`Report #${id} marked as resolved`);
+        apiClient.patch(`/reports/${id}/resolve`).then(res => {
+            const updated = res.data.report;
+            setReports(prev => prev.map(report => report._id === updated._id ? updated : report));
+            toast.success('Report marked as resolved');
+            if (selectedReport?._id === updated._id) {
+                setSelectedReport(updated);
+            }
+        }).catch(err => {
+            console.error(err);
+            toast.error('Failed to mark report resolved');
+        });
+    };
+
+    const handleView = (report) => {
+        setSelectedReport(report);
+        setIsDialogOpen(true);
     };
 
     const handleDownload = () => {
         toast.success('Reports downloaded successfully');
     };
+
+    useEffect(() => {
+        let mounted = true;
+        apiClient.get('/reports').then(res => {
+            if (!mounted) return;
+            setReports(res.data.reports || []);
+        }).catch(err => {
+            console.error(err);
+            toast.error('Failed to load reports');
+        });
+        return () => { mounted = false };
+    }, []);
 
     return (
         <div className='flex h-screen bg-gradient-to-br from-slate-50 to-slate-100'>
@@ -107,7 +96,6 @@ const ReportsManagement = () => {
 
                 <div className='flex-1 overflow-auto p-8'>
                     <div className='max-w-7xl mx-auto'>
-                        {/* Header */}
                         <div className='mb-8 flex justify-between items-start'>
                             <div>
                                 <h1 className='text-3xl font-bold text-slate-900'>Reports & Incidents</h1>
@@ -118,51 +106,26 @@ const ReportsManagement = () => {
                             </Button>
                         </div>
 
-                        {/* Summary Cards */}
                         <div className='grid grid-cols-1 md:grid-cols-4 gap-4 mb-8'>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className='bg-red-50 border border-red-200 rounded-lg p-4'
-                            >
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='bg-red-50 border border-red-200 rounded-lg p-4'>
                                 <p className='text-red-700 text-sm font-medium'>Critical Issues</p>
-                                <p className='text-3xl font-bold text-red-800 mt-2'>1</p>
+                                <p className='text-3xl font-bold text-red-800 mt-2'>{reports.filter(report => report.severity === 'critical').length}</p>
                             </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.1 }}
-                                className='bg-orange-50 border border-orange-200 rounded-lg p-4'
-                            >
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className='bg-orange-50 border border-orange-200 rounded-lg p-4'>
                                 <p className='text-orange-700 text-sm font-medium'>High Priority</p>
-                                <p className='text-3xl font-bold text-orange-800 mt-2'>2</p>
+                                <p className='text-3xl font-bold text-orange-800 mt-2'>{reports.filter(report => report.severity === 'high').length}</p>
                             </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                                className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'
-                            >
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className='bg-yellow-50 border border-yellow-200 rounded-lg p-4'>
                                 <p className='text-yellow-700 text-sm font-medium'>Pending Review</p>
-                                <p className='text-3xl font-bold text-yellow-800 mt-2'>3</p>
+                                <p className='text-3xl font-bold text-yellow-800 mt-2'>{reports.filter(report => report.status !== 'resolved').length}</p>
                             </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className='bg-green-50 border border-green-200 rounded-lg p-4'
-                            >
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className='bg-green-50 border border-green-200 rounded-lg p-4'>
                                 <p className='text-green-700 text-sm font-medium'>Resolved</p>
-                                <p className='text-3xl font-bold text-green-800 mt-2'>1</p>
+                                <p className='text-3xl font-bold text-green-800 mt-2'>{reports.filter(report => report.status === 'resolved').length}</p>
                             </motion.div>
                         </div>
 
-                        {/* Reports List */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3 }}
-                        >
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
                             <Card className='shadow-lg'>
                                 <CardHeader>
                                     <CardTitle className='flex items-center gap-2'>
@@ -174,15 +137,15 @@ const ReportsManagement = () => {
                                     <div className='space-y-4'>
                                         {reports.map((report, idx) => (
                                             <motion.div
-                                                key={report.id}
+                                                key={report._id}
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
                                                 className={`border-2 rounded-lg p-4 ${getStatusColor(report.status)}`}
                                             >
-                                                <div className='flex justify-between items-start'>
+                                                <div className='flex justify-between items-start gap-4'>
                                                     <div className='flex-1'>
-                                                        <div className='flex items-center gap-3 mb-2'>
+                                                        <div className='flex items-center gap-3 mb-2 flex-wrap'>
                                                             <Badge className={getSeverityColor(report.severity)}>
                                                                 {report.severity.toUpperCase()}
                                                             </Badge>
@@ -191,9 +154,9 @@ const ReportsManagement = () => {
                                                         </div>
                                                         <h3 className='text-lg font-semibold mb-1'>{report.title}</h3>
                                                         <p className='text-sm mb-2'>{report.description}</p>
-                                                        <div className='text-xs opacity-75'>
-                                                            <p>📅 {new Date(report.date).toLocaleDateString()}</p>
-                                                            <p>👤 Reported by: {report.reportedBy}</p>
+                                                        <div className='text-xs opacity-75 space-y-1'>
+                                                            <p>Reported on: {new Date(getReportDate(report)).toLocaleDateString()}</p>
+                                                            <p>Reported by: {getReportedByText(report)}</p>
                                                         </div>
                                                     </div>
                                                     <div className='flex gap-2'>
@@ -201,17 +164,16 @@ const ReportsManagement = () => {
                                                             variant='outline'
                                                             size='sm'
                                                             className='text-purple-600 border-purple-600 hover:bg-purple-50'
+                                                            onClick={() => handleView(report)}
                                                         >
                                                             <Eye size={16} className='mr-1' /> View
                                                         </Button>
-                                                        {report.status !== 'resolved' && (
-                                                            <Button
-                                                                size='sm'
-                                                                onClick={() => handleResolve(report.id)}
-                                                                className='bg-green-600 hover:bg-green-700'
-                                                            >
+                                                        {report.status !== 'resolved' ? (
+                                                            <Button size='sm' onClick={() => handleResolve(report._id)} className='bg-green-600 hover:bg-green-700'>
                                                                 Mark Resolved
                                                             </Button>
+                                                        ) : (
+                                                            <Button size='sm' disabled className='opacity-60'>Resolved</Button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -220,9 +182,39 @@ const ReportsManagement = () => {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <DialogContent className='sm:max-w-2xl'>
+                                    <DialogHeader>
+                                        <DialogTitle>Report Details</DialogTitle>
+                                    </DialogHeader>
+                                    <DialogDescription>
+                                        {selectedReport ? (
+                                            <div className='space-y-4 mt-2'>
+                                                <p className='text-sm text-muted-foreground'><strong>Title:</strong> {selectedReport.title}</p>
+                                                <p className='text-sm'><strong>Type:</strong> {selectedReport.type}</p>
+                                                <p className='text-sm'><strong>Severity:</strong> {selectedReport.severity}</p>
+                                                <p className='text-sm'><strong>Status:</strong> {selectedReport.status}</p>
+                                                <p className='text-sm'><strong>Date:</strong> {new Date(getReportDate(selectedReport)).toLocaleDateString()}</p>
+                                                <p className='text-sm'><strong>Reported by:</strong> {getReportedByText(selectedReport)}</p>
+                                                <div className='pt-2 border-t mt-2'>
+                                                    <p className='text-sm'>{selectedReport.description}</p>
+                                                </div>
+                                                {selectedReport.status !== 'resolved' && (
+                                                    <div className='pt-4'>
+                                                        <Button onClick={() => handleResolve(selectedReport._id)} className='bg-green-600 hover:bg-green-700'>Mark Resolved</Button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p>Loading...</p>
+                                        )}
+                                    </DialogDescription>
+                                    <DialogFooter />
+                                </DialogContent>
+                            </Dialog>
                         </motion.div>
 
-                        {/* Additional Info */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}

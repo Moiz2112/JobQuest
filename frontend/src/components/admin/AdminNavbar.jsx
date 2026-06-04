@@ -46,9 +46,9 @@ const AdminNavbar = () => {
                         <span className='absolute top-1 right-1 w-2 h-2 bg-red-600 rounded-full'></span>
                     </button>
 
-                    {/* Settings */}
+                    {/* Settings (go to admin profile) */}
                     <button 
-                        onClick={() => navigate('/admin/settings')}
+                        onClick={() => navigate('/admin/profile')}
                         className='p-2 hover:bg-gray-100 rounded-lg transition-colors'
                     >
                         <Settings size={20} className='text-gray-600' />

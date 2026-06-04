@@ -1,16 +1,13 @@
 import React, { useState } from 'react'
 import Navbar from './shared/Navbar'
 import { Avatar, AvatarImage } from './ui/avatar'
-import { Button } from './ui/button'
 import { Contact, Mail, Pen, Download, Award, FileText } from 'lucide-react'
 import { Badge } from './ui/badge'
-import { Label } from './ui/label'
 import AppliedJobTable from './AppliedJobTable'
 import UpdateProfileDialog from './UpdateProfileDialog'
 import { useSelector } from 'react-redux'
 import useGetAppliedJobs from '@/hooks/useGetAppliedJobs'
 import { motion } from 'framer-motion'
-import Footer from './shared/Footer'
 
 // const skills = ["Html", "Css", "Javascript", "Reactjs"]
 

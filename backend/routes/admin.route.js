@@ -3,6 +3,7 @@ import {
     getAllUsers,
     banUser,
     getAllJobs,
+    updateAdminJob,
     deleteJob,
     getAllCompanies,
     approveCompany,
@@ -27,7 +28,7 @@ router.route("/users/:userId/ban").patch(isAuthenticated, banUser);
 
 // Jobs Management
 router.route("/jobs").get(isAuthenticated, getAllJobs);
-router.route("/jobs/:jobId").delete(isAuthenticated, deleteJob);
+router.route("/jobs/:jobId").patch(isAuthenticated, updateAdminJob).delete(isAuthenticated, deleteJob);
 
 // Companies Management
 router.route("/companies").get(isAuthenticated, getAllCompanies);

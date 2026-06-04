@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
-import { LogOut, User2, Menu, X, Home, Briefcase, BarChart3 } from 'lucide-react'
+import { LogOut, User2, Menu, X, BarChart3 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import apiClient from '@/utils/apiClient'
@@ -10,22 +10,13 @@ import { USER_API_END_POINT } from '@/utils/constant'
 import { logout } from '@/redux/authSlice'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
+import ReportIssue from '../ReportIssue'
 
 const Navbar = () => {
     const { user, isAuthenticated } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const [isScrolled, setIsScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 50);
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     const logoutHandler = async () => {
         try {
@@ -109,6 +100,9 @@ const Navbar = () => {
                                             </>
                                         )
                                         }
+                                        <li>
+                                            <ReportIssue />
+                                        </li>
                                     </>
                                 ) : (
                                     <>

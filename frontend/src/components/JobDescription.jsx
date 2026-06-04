@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
-import { Button } from './ui/button'
 import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '@/utils/apiClient';
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
@@ -8,9 +7,9 @@ import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { MapPin, Briefcase, DollarSign, Users, Calendar, CheckCircle, Heart, Share2, FileText } from 'lucide-react';
+import { MapPin, Briefcase, DollarSign, Users, CheckCircle, Heart, Share2, FileText } from 'lucide-react';
 import { Avatar, AvatarImage } from './ui/avatar';
-import Footer from './shared/Footer';
+import ReportIssue from './ReportIssue'
 
 const JobDescription = () => {
     const {singleJob} = useSelector(store => store.job);
@@ -213,6 +212,7 @@ const JobDescription = () => {
                             >
                                 <Share2 size={18} />
                             </motion.button>
+                            <ReportIssue />
                         </div>
                     </div>
                 </div>

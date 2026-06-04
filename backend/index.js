@@ -11,6 +11,7 @@ import companyRoute from "./routes/company.route.js";
 import jobRoute from "./routes/job.route.js";
 import applicationRoute from "./routes/application.route.js";
 import adminRoute from "./routes/admin.route.js";
+import reportRoute from "./routes/report.route.js";
 dotenv.config();
 
 const app = express();
@@ -51,6 +52,7 @@ app.use("/api/v1/company",companyRoute);
 app.use("/api/v1/job",jobRoute);
 app.use("/api/v1/application",applicationRoute);
 app.use("/api/v1/admin",adminRoute);
+app.use("/api/v1/reports", reportRoute);
 
 //these api's are available
 // User: http://localhost:3000/api/v1/user/register, /login, /logout, /profile/update

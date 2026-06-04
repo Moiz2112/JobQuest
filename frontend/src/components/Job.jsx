@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Button } from './ui/button'
-import { Bookmark, Heart, MapPin, DollarSign, Clock, Briefcase } from 'lucide-react'
+import { Bookmark, MapPin, DollarSign, Clock, Briefcase } from 'lucide-react'
 import { Avatar, AvatarImage } from './ui/avatar'
-import { Badge } from './ui/badge'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import apiClient from '@/utils/apiClient'
 import { APPLICATION_API_END_POINT } from '@/utils/constant'
 import { toast } from 'sonner'
@@ -16,8 +14,6 @@ const Job = ({ job }) => {
     const [isApplied, setIsApplied] = useState(false);
     const { user } = useSelector(store => store.auth);
     const { allAppliedJobs } = useSelector(store => store.job);
-    const dispatch = useDispatch();
-
     // Check if this job has been applied for
     useEffect(() => {
         if (allAppliedJobs && job?._id) {

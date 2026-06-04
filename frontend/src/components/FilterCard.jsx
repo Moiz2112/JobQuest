@@ -38,7 +38,7 @@ const FilterCard = () => {
 
     useEffect(()=>{
         dispatch(setSearchedQuery(selectedValue));
-    },[selectedValue]);
+    },[dispatch, selectedValue]);
 
     const containerVariants = {
         hidden: { opacity: 0, y: 10 },

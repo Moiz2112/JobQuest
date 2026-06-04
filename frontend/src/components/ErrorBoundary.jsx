@@ -1,6 +1,5 @@
 import React from 'react';
 import { AlertCircle, Home } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -35,7 +34,7 @@ class ErrorBoundary extends React.Component {
                             We encountered an unexpected error. Please try refreshing the page or go back.
                         </p>
 
-                        {process.env.NODE_ENV === 'development' && (
+                        {import.meta.env.DEV && (
                             <div className='bg-red-50 border border-red-200 rounded-lg p-4 mb-6'>
                                 <p className='text-xs font-mono text-red-700 break-words'>
                                     {this.state.error?.message}

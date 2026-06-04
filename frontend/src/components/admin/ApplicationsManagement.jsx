@@ -6,8 +6,9 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Badge } from '../ui/badge'
 import { Avatar, AvatarImage } from '../ui/avatar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
 import { motion } from 'framer-motion'
-import { Search, Eye, Download } from 'lucide-react'
+import { Search, Eye } from 'lucide-react'
 import apiClient from '@/utils/apiClient'
 import { toast } from 'sonner'
 
@@ -17,28 +18,14 @@ const ApplicationsManagement = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [selectedApplication, setSelectedApplication] = useState(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
 
     useEffect(() => {
         fetchApplications();
     }, []);
 
     useEffect(() => {
-        filterApplications();
-    }, [applications, searchTerm, statusFilter]);
-
-    const fetchApplications = async () => {
-        try {
-            const res = await apiClient.get('/admin/applications');
-            setApplications(res.data.applications || []);
-        } catch (error) {
-            console.error('Error fetching applications:', error);
-            toast.error('Failed to fetch applications');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const filterApplications = () => {
         let filtered = applications;
 
         if (searchTerm) {
@@ -53,6 +40,18 @@ const ApplicationsManagement = () => {
         }
 
         setFilteredApplications(filtered);
+    }, [applications, searchTerm, statusFilter]);
+
+    const fetchApplications = async () => {
+        try {
+            const res = await apiClient.get('/admin/applications');
+            setApplications(res.data.applications || []);
+        } catch (error) {
+            console.error('Error fetching applications:', error);
+            toast.error('Failed to fetch applications');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getStatusColor = (status) => {
@@ -64,6 +63,11 @@ const ApplicationsManagement = () => {
         }
     };
 
+    const handleViewApplication = (application) => {
+        setSelectedApplication(application);
+        setIsViewOpen(true);
+    };
+
     return (
         <div className='flex h-screen bg-gradient-to-br from-slate-50 to-slate-100'>
             <AdminDashboardSidebar />
@@ -73,13 +77,11 @@ const ApplicationsManagement = () => {
 
                 <div className='flex-1 overflow-auto p-8'>
                     <div className='max-w-7xl mx-auto'>
-                        {/* Header */}
                         <div className='mb-8'>
                             <h1 className='text-3xl font-bold text-slate-900'>Applications Management</h1>
                             <p className='text-slate-600'>Manage all job applications across the platform</p>
                         </div>
 
-                        {/* Controls */}
                         <div className='flex gap-4 mb-6 flex-wrap'>
                             <div className='flex-1 min-w-64'>
                                 <div className='relative'>
@@ -107,7 +109,6 @@ const ApplicationsManagement = () => {
                             </Button>
                         </div>
 
-                        {/* Applications Table */}
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -173,7 +174,12 @@ const ApplicationsManagement = () => {
                                                                 </span>
                                                             </td>
                                                             <td className='px-6 py-4'>
-                                                                <Button variant='outline' size='sm' className='text-purple-600'>
+                                                                <Button
+                                                                    variant='outline'
+                                                                    size='sm'
+                                                                    className='text-purple-600'
+                                                                    onClick={() => handleViewApplication(app)}
+                                                                >
                                                                     <Eye size={16} className='mr-1' /> View
                                                                 </Button>
                                                             </td>
@@ -189,6 +195,59 @@ const ApplicationsManagement = () => {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+                <DialogContent className='sm:max-w-2xl'>
+                    <DialogHeader>
+                        <DialogTitle>Application Details</DialogTitle>
+                    </DialogHeader>
+                    {selectedApplication && (
+                        <div className='space-y-4 text-sm'>
+                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                <p><strong>Applicant:</strong> {selectedApplication.applicant?.fullname || 'N/A'}</p>
+                                <p><strong>Email:</strong> {selectedApplication.applicant?.email || 'N/A'}</p>
+                                <p><strong>Phone:</strong> {selectedApplication.applicant?.phoneNumber || 'N/A'}</p>
+                                <p><strong>Status:</strong> {selectedApplication.status}</p>
+                                <p><strong>Job:</strong> {selectedApplication.job?.title || 'N/A'}</p>
+                                <p><strong>Company:</strong> {selectedApplication.job?.company?.name || 'N/A'}</p>
+                                <p><strong>Applied On:</strong> {new Date(selectedApplication.createdAt).toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <strong>Resume:</strong>{' '}
+                                {selectedApplication.resume ? (
+                                    <a
+                                        href={selectedApplication.resume}
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                        className='text-purple-600 hover:underline'
+                                    >
+                                        View Resume
+                                    </a>
+                                ) : 'N/A'}
+                            </div>
+                            <div>
+                                <strong>Cover Letter:</strong>
+                                <p className='mt-1 whitespace-pre-wrap text-gray-700'>{selectedApplication.coverLetter || 'No cover letter provided.'}</p>
+                            </div>
+                            {selectedApplication.notes && (
+                                <div>
+                                    <strong>Notes:</strong>
+                                    <p className='mt-1 whitespace-pre-wrap text-gray-700'>{selectedApplication.notes}</p>
+                                </div>
+                            )}
+                            {selectedApplication.interviewDetails?.date && (
+                                <div>
+                                    <strong>Interview Details:</strong>
+                                    <p className='mt-1 text-gray-700'>
+                                        {new Date(selectedApplication.interviewDetails.date).toLocaleDateString()}
+                                        {selectedApplication.interviewDetails.time ? ` at ${selectedApplication.interviewDetails.time}` : ''}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { MapPin, Briefcase, Users, Globe, Linkedin, Twitter, Facebook, Instagram, ArrowLeft, LinkIcon } from 'lucide-react'
 import { Badge } from './ui/badge'
 import Footer from './shared/Footer'
+import ReportIssue from './ReportIssue'
 
 const CompanyProfile = () => {
     const { id } = useParams();
@@ -95,6 +96,9 @@ const CompanyProfile = () => {
                                             {singleCompany?.companySize} employees
                                         </div>
                                     )}
+                                </div>
+                                <div className='mt-4'>
+                                    <ReportIssue />
                                 </div>
                             </div>
                         </div>

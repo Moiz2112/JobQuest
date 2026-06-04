@@ -212,8 +212,8 @@ export const getAllApplications = async (req, res) => {
                     select: 'name'
                 }
             })
-            .populate('applicant', 'fullname email profile')
-            .select('job applicant status createdAt')
+            .populate('applicant', 'fullname email phoneNumber profile')
+            .select('job applicant status createdAt resume coverLetter notes interviewDetails')
             .lean();
 
         return res.status(200).json({
@@ -225,6 +225,74 @@ export const getAllApplications = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             message: "Error fetching applications",
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// Update any job as platform admin
+export const updateAdminJob = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const {
+            title,
+            description,
+            requirements,
+            salary,
+            location,
+            jobType,
+            workMode,
+            experienceLevel,
+            category,
+            industry,
+            skills,
+            position,
+            isActive
+        } = req.body;
+
+        const job = await Job.findById(jobId);
+
+        if (!job) {
+            return res.status(404).json({
+                message: "Job not found",
+                success: false
+            });
+        }
+
+        if (title !== undefined) job.title = title;
+        if (description !== undefined) job.description = description;
+        if (requirements !== undefined) job.requirements = typeof requirements === "string"
+            ? requirements.split(",").map((item) => item.trim()).filter(Boolean)
+            : requirements;
+        if (salary !== undefined) job.salary = salary;
+        if (location !== undefined) job.location = location;
+        if (jobType !== undefined) job.jobType = jobType;
+        if (workMode !== undefined) job.workMode = workMode;
+        if (experienceLevel !== undefined) job.experienceLevel = experienceLevel;
+        if (category !== undefined) job.category = category;
+        if (industry !== undefined) job.industry = industry;
+        if (skills !== undefined) job.skills = typeof skills === "string"
+            ? skills.split(",").map((item) => item.trim()).filter(Boolean)
+            : skills;
+        if (position !== undefined) job.position = Number(position);
+        if (isActive !== undefined) job.isActive = Boolean(isActive);
+
+        await job.save();
+
+        const updatedJob = await Job.findById(jobId)
+            .populate('company', 'name logo location industry')
+            .populate('created_by', 'fullname email profile.profilePhoto');
+
+        return res.status(200).json({
+            message: "Job updated successfully",
+            success: true,
+            job: updatedJob
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            message: "Error updating job",
             success: false,
             error: error.message
         });

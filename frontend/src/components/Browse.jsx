@@ -19,7 +19,7 @@ const Browse = () => {
         return ()=>{
             dispatch(setSearchedQuery(""));
         }
-    },[])
+    },[dispatch])
 
     const containerVariants = {
         hidden: { opacity: 0 },
